@@ -3,7 +3,7 @@
 小米万兆路由器（RC01 / BE10000 / AX10000）在 **1.1.56 稳定版**上获取 root 的实测记录。
 不降级、不丢 WiFi 7 / MLO。
 
-> **为什么有这个仓库**
+> **仓库来源**
 > XMiR-Patcher 的 issue [#105](https://github.com/openwrt-xiaomi/xmir-patcher/issues/105)
 > 从 2025-05 起就有人报「be10000 rom1.1.56 cannot install exploit」，至今无人回复。
 > 社区给出的答案只有「降级到 1.0.5x」。这个仓库补上另一条路。
@@ -23,13 +23,13 @@ Verified on RC01 / 1.1.56. Credit: [PR #168](https://github.com/openwrt-xiaomi/x
 |---|---|
 | ✅ 适用 | RC01 / BE10000 / AX10000，固件 1.1.5x（`hackCheck=3`，Web API 全部被封） |
 | ⚠️ 参考 | BE7000 (RC06) 1.1.38 —— PR #168 原作者的测试环境，结论一致 |
-| ❌ 别用 | 1.0.53 及更早。这些版本 Web API 漏洞还在，XMiR 一键就开，用本文是绕远路 |
+| ❌ 别用 | 1.0.53 及更早。这些版本 Web API 漏洞还在，XMiR 一键就能开，本文是绕路实现 |
 
 ## 为什么老方法在这台机器上失效
 
-两条独立的路都被堵了：
+两条独立的路都被堵死：
 
-**路 1：XMiR 的 Web API 漏洞** —— `hackCheck version = 3`，入口全封：
+**路 1：XMiR 的 Web API 漏洞** —— `hackCheck version = 3`，入口被封：
 
 ```
 WARN: Exploits "arn_switch/start_binding/set_mac_filter/datacenter7" not working!!!
@@ -37,9 +37,9 @@ WARN: Exploits "Smartcontroller" are not usable (hackCheck:3)
 WARN: Exploit "get_icon" not working!!! (API not founded)
 ```
 
-**路 2：社区教程的 `bind mount + chroot`** —— 2023 年那批万兆路由器教程走的是
+**路 2：社区教程的 `bind mount + chroot`** —— 2023 年教程走的是
 「装 nginx:alpine → 挂 `mi_docker/../../..` 到 `/real_root` → chroot 改 dropbear」。
-这条路在 1.1.56 上直接被 OPA 拒掉，容器根本建不起来：
+这条路在 1.1.56 上直接被 OPA 拒掉，容器建不起来：
 
 ```
 Error response from daemon: authorization denied by plugin opa-docker-authz:
@@ -58,7 +58,7 @@ SimpleDocker (9001, admin/admin —— 出厂默认凭据，动手前先改掉)
 
 `release_agent` 的原理：某个 cgroup 的**最后一个进程退出**时，内核会在
 **宿主命名空间**执行 `release_agent` 指向的程序，**以 uid=0 运行**。
-容器有 `CAP_SYS_ADMIN` 就能自己挂一个 cgroup 层级并设置它。
+容器有 `CAP_SYS_ADMIN` 能自己挂一个 cgroup 层级并设置它。
 
 完整命令链、以及两个必须避开的坑，见 **[docs/01-no-downgrade-root.md](docs/01-no-downgrade-root.md)**。
 
